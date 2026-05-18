@@ -28,7 +28,7 @@ export function RegistrationForm() {
     setImages((prev) => ({ ...prev, [key]: file }));
   }
 
-  async function onSubmit(formData: FormData) {
+  async function submitForm(formData: FormData) {
     setLoading(true);
     setError("");
     setSuccess("");
@@ -53,8 +53,14 @@ export function RegistrationForm() {
     form?.reset();
   }
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    submitForm(fd);
+  }
+
   return (
-    <form id="registration-form" action={onSubmit} className="card form-appear space-y-4">
+    <form id="registration-form" onSubmit={handleSubmit} className="card form-appear space-y-4">
       <h2 className="text-2xl font-semibold text-white">Registro de Participante</h2>
       <input name="fullName" required minLength={3} maxLength={100} placeholder="Nombre completo" className="field" />
       <input name="email" required type="email" placeholder="Correo electronico" className="field" />
@@ -90,7 +96,7 @@ export function RegistrationForm() {
         ))}
       </div>
 
-      <button disabled={loading} className="btn-primary w-full">
+      <button type="submit" disabled={loading} className="btn-primary w-full">
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar Registro"}
       </button>
 
