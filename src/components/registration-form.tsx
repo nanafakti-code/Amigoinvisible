@@ -43,6 +43,11 @@ export function RegistrationForm() {
     if (!response.ok) {
       setError(payload.error ?? "No se pudo completar el registro.");
       setLoading(false);
+      // ensure user sees the error message on mobile
+      setTimeout(() => {
+        const el = document.getElementById("registration-form");
+        el?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
       return;
     }
 
@@ -51,11 +56,23 @@ export function RegistrationForm() {
     setLoading(false);
     const form = document.getElementById("registration-form") as HTMLFormElement | null;
     form?.reset();
+    // scroll to show success message on small screens
+    setTimeout(() => {
+      const el = document.getElementById("registration-form");
+      el?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    // ensure HTML5 validation messages are shown on mobile
+    const formEl = e.currentTarget;
+    if (!formEl.checkValidity()) {
+      formEl.reportValidity();
+      return;
+    }
+
+    const fd = new FormData(formEl);
     submitForm(fd);
   }
 
