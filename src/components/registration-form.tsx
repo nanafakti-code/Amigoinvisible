@@ -37,30 +37,47 @@ export function RegistrationForm() {
     if (images.image2) formData.append("image2", images.image2);
     if (images.image3) formData.append("image3", images.image3);
 
-    const response = await fetch("/api/register", { method: "POST", body: formData });
-    const payload = await response.json();
+    try {
+      const response = await fetch("/api/register", { method: "POST", body: formData });
+      let payload: any = {};
+      try {
+        payload = await response.json();
+      } catch (e) {
+        // non-json response
+        payload = { error: `Respuesta inválida del servidor (status ${response.status})` };
+      }
 
-    if (!response.ok) {
-      setError(payload.error ?? "No se pudo completar el registro.");
-      setLoading(false);
-      // ensure user sees the error message on mobile
+      if (!response.ok) {
+        const msg = payload?.error ?? "No se pudo completar el registro.";
+        console.error("Registro fallido:", msg, payload);
+        setError(msg);
+        // ensure user sees the error message on mobile
+        setTimeout(() => {
+          const el = document.getElementById("registration-form");
+          el?.scrollIntoView({ behavior: "smooth" });
+        }, 50);
+        return;
+      }
+
+      setSuccess("Registro completado. Revisa tu correo cuando se realice el sorteo.");
+      setImages({ image1: null, image2: null, image3: null });
+      const form = document.getElementById("registration-form") as HTMLFormElement | null;
+      form?.reset();
+      // scroll to show success message on small screens
       setTimeout(() => {
         const el = document.getElementById("registration-form");
         el?.scrollIntoView({ behavior: "smooth" });
       }, 50);
-      return;
+    } catch (err) {
+      console.error("Error enviando registro:", err);
+      setError("Error de red o servidor. Intenta de nuevo más tarde.");
+      setTimeout(() => {
+        const el = document.getElementById("registration-form");
+        el?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+    } finally {
+      setLoading(false);
     }
-
-    setSuccess("Registro completado. Revisa tu correo cuando se realice el sorteo.");
-    setImages({ image1: null, image2: null, image3: null });
-    setLoading(false);
-    const form = document.getElementById("registration-form") as HTMLFormElement | null;
-    form?.reset();
-    // scroll to show success message on small screens
-    setTimeout(() => {
-      const el = document.getElementById("registration-form");
-      el?.scrollIntoView({ behavior: "smooth" });
-    }, 50);
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
