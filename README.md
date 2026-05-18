@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Amigo Invisible Futbol
 
-## Getting Started
+Web moderna para organizar un amigo invisible de camisetas de futbol con Next.js, Supabase y NodeMailer.
 
-First, run the development server:
+## Stack
+- Next.js 16 + TypeScript + TailwindCSS
+- Supabase (PostgreSQL) + Cloudinary (imagenes)
+- API Routes en Next (backend Node.js)
+- NodeMailer con Gmail SMTP
+- Framer Motion + Lucide Icons
 
+## Funcionalidades
+- Registro de usuarios con nombre, email, top 3 camisetas, lista de "no quiero".
+- Subida de hasta 3 imagenes (JPG/PNG/WEBP) con vista previa.
+- Anti-duplicados por email.
+- Fecha limite de sorteo configurable.
+- Panel admin privado con clave por header.
+- Dashboard visual de participantes y estado de sorteo.
+- Sorteo automatico sin autoasignaciones.
+- Envio de correos personalizado tras el sorteo.
+
+## Configuracion
+1. Instala dependencias:
+```bash
+npm install
+```
+2. Crea `.env.local` desde `.env.example` y rellena valores.
+3. En Supabase, crea bucket publico llamado `shirt-images` (o cambia `SUPABASE_BUCKET`).
+4. Ejecuta SQL de `supabase/schema.sql`.
+
+## Variables de entorno
+Ver `.env.example`.
+
+Campos clave:
+- `ADMIN_SECRET_KEY`: clave del panel admin.
+- `SMTP_EMAIL` y `SMTP_PASSWORD`: Gmail SMTP para correos.
+- `DRAW_DEADLINE`: bloqueo del registro tras fecha limite.
+
+## Ejecucion local
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+- Home: `http://localhost:3000`
+- Admin: `http://localhost:3000/admin`
+
+## Seguridad aplicada
+- Validacion frontend y backend con Zod y reglas estrictas.
+- Sanitizacion de texto de entrada.
+- Restriccion de formatos y tamano de imagen.\n- Upload seguro a Cloudinary desde backend (sin exponer secretos).
+- Credenciales via variables de entorno (sin hardcode).
+- Endpoint admin protegido por clave secreta.
+- Unicidad de email en DB.
+
+## Despliegue en Vercel
+1. Sube repo a GitHub.
+2. Importa proyecto en Vercel.
+3. Configura las variables de entorno de `.env.example`.
+4. Ejecuta chequeo local previo:
+```bash
+npm run deploy:check
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estructura
+- `src/app/api/*`: backend y endpoints.
+- `src/components/*`: UI reusable.
+- `src/lib/*`: validacion, sorteo, auth, mail, supabase.
+- `supabase/schema.sql`: esquema de base de datos.
+- `public/mockups/*`: placeholders de camisetas.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Notas SMTP Gmail
+Si usas Gmail personal, necesitas App Password (2FA habilitado), no tu password normal.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
