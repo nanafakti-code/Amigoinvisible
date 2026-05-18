@@ -25,7 +25,59 @@ export function RegistrationForm() {
 
   function onPickImage(key: ImageKey, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
-    setImages((prev) => ({ ...prev, [key]: file }));
+    if (!file) return;
+    // compress image before storing to avoid large payloads (server/Vercel limits)
+    compressImageFile(file, 700 * 1024)
+      .then((f) => setImages((prev) => ({ ...prev, [key]: f })))
+      .catch((err) => {
+        console.error("Error comprimiendo imagen:", err);
+        setError("No se pudo procesar la imagen. Usa una imagen más pequeña.");
+      });
+  }
+
+  async function compressImageFile(file: File, targetSize = 700 * 1024): Promise<File> {
+    // If already small enough, return original
+    if (file.size <= targetSize) return file;
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("File read error"));
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = document.createElement("img") as HTMLImageElement;
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Image load error"));
+      image.src = dataUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    const maxWidth = 1200;
+    const scale = Math.min(1, maxWidth / img.width);
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas not supported");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // try decreasing quality until under targetSize or minQuality reached
+    let quality = 0.9;
+    for (let i = 0; i < 6; i++) {
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      if (!blob) throw new Error("Compression failed");
+      if (blob.size <= targetSize) {
+        return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: blob.type });
+      }
+      quality -= 0.15; // lower quality and try again
+      if (quality <= 0.1) break;
+    }
+
+    // final attempt: return last blob (may still be large) but ensure type
+    const finalBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", Math.max(0.1, quality)));
+    if (!finalBlob) throw new Error("Compression final failed");
+    return new File([finalBlob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: finalBlob.type });
   }
 
   async function submitForm(formData: FormData) {
